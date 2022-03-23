@@ -1,0 +1,164 @@
+# Set the App ID
+appID: test
+env: prod
+
+# Set the userID name as a label
+userID: Example
+
+# Select the litespeed image to be installed. The options can be
+# "litespeedtech/openlitespeed:latest"
+annotations: {}
+
+image: cloudways/openlitespeed:7.4-prod
+
+
+# Every time the kubelet launches a container, the kubelet queries the container image registry to resolve the name to an image digest
+imagePullPolicy : Always
+
+# Container will be restarted even if it exited with a zero exit code
+restartPolicy: Always
+
+# Amount of desired images
+replicasCount: 1
+
+resources:
+  limits:
+    memory : 4Gi
+    cpu: 2
+  requests:
+    cpu: 50m
+    memory : 100Mi
+
+dnsPolicy: ClusterFirst
+
+hpa:
+  maxReplicas: 30
+  # percents from cpu request
+  cpuUtil: 600
+  # percents from mem request
+  memUtil: 300
+
+# The strategy to update the deployment with a new version
+strategy:
+  type: RollingUpdate
+  maxUnavailable: 10%
+  maxSurge: 75%
+
+# We can add one or more env
+envVar:
+  PHP_INI_SCAN_DIR: /opt/ini/:/usr/local/etc/php/conf.d/:/usr/local/etc/php
+  WEB_DOCUMENT_ROOT: /var/www/vhosts/localhost/html/
+  APPLICATION_USER: www-data
+  APPLICATION_GROUP: www-data
+  APPLICATION_PATH: /var/www/html/
+  K8S_SUBNETS: __K8s_SUBNETS__
+
+# The mount home will be different according the webseverser selection
+
+imagePullSecretsName: cwprivateimg
+
+hosts:
+  - app.localhost.localdomain
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  issuer:
+    letsencrypt: true
+    preOwned:
+      crt: "examplecrt"
+      key: "examplekey"
+
+phpParams:
+  log_errors: "on"
+  memory_limit: "1024M"
+  max_execution_time: "600"
+  date_timezone: "UTC"
+  max_input_time: "300"
+  post_max_size: 100M
+  upload_max_filesize: 100M
+  max_input_vars: "3000"
+  max_file_uploads: "20"
+  display_errors: "off"
+
+wp:
+  oldDomainName: ""                     # Will only be passed if we decide to change the current running domain, it triggers pre-upgrade hook.
+  domainName: __WP_SERVER_NAME__        # Wordpress URL.
+  dbUser: __DB_USER__                   # DO database user to connect with.
+  dbPassword: __DB_PASSWORD__           # DO database password.
+  dbHost: __DB_HOST__                   # DO database host.
+  dbPort: __DB_PORT__                   # Port on which DO database is running on.
+  dbName: __DB_NAME__                   # Name of DO database name.
+  userLogin: __USER_LOGIN__             # Wordpress email for login.
+  userPassword: __USER_PASSWORD__       # Wordpress password for login.
+  type: __WP_TYPE__                     # type should be left as it is if its a normal wordpress installation, if type=woocommerce then WooCommerce plugin will be installed.
+
+budget:
+  enabled: true
+  maxUnavailable: "20%"
+
+redis:
+  architecture: standalone
+
+  auth:
+    enabled: false
+
+  commonConfiguration: |-
+      tcp-backlog 511
+      tcp-keepalive 300
+      save ""
+      stop-writes-on-bgsave-error no
+      maxmemory 2gb
+      maxmemory-policy allkeys-lru
+      maxmemory-samples 10
+      protected-mode "no"
+      appendonly no
+      client-output-buffer-limit normal 0 0 0
+      jemalloc-bg-thread yes
+
+  master:
+    configuration: |-
+      tcp-backlog 511
+      tcp-keepalive 300
+      save ""
+      stop-writes-on-bgsave-error no
+      maxmemory 2gb
+      maxmemory-policy allkeys-lru
+      maxmemory-samples 10
+      protected-mode "no"
+      appendonly no
+      client-output-buffer-limit normal 0 0 0
+      jemalloc-bg-thread yes
+
+    disableCommands: []
+
+    resources:
+      limits:
+        memory: 2Gi
+      requests:
+        memory: 50Mi
+    persistence:
+      enabled: false
+
+cron: []
+  # - name: cronjob
+  #   schedule: "*/5 * * * *"
+  #   command: ["date"]
+  #   imagePullSecretsName: cwprivateimg
+  #   image: cloudways/openlitespeed:7.4-b70757e
+  #   namespace: default
+  #   failedJobsHistoryLimit: 1
+  #   successfulJobsHistoryLimit: 2
+  #   concurrencyPolicy: Forbid
+  #   suspend: false
+apmAgent:
+  serverUrl: "http://cluster-base-apm-server.kube-system.svc.cluster.local:8200"
+  bootstrapPhpPartFile: "/apm-agent-php-1.3.1/src/bootstrap_php_part.php"
+
+pvc:
+  name: nfs-claim
+  storageClass: nfs-client
+  storage: 500Mi
+  accessModes: ReadWriteMany

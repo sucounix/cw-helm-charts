@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "litespeed.fullname" . }}-pre-install
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "0"
+  labels:
+    userID: {{ .Values.userID | quote }}
+    appID: {{ .Values.appID | quote }}
+    version: {{ .Chart.Version | quote }}
+data:
+  pre-install.sh: |
+    #!/bin/bash
+    set -x
+    set -e
+    mkdir -p /var/www/applications/{{ .Values.appID }}/public_html
+    cd /var/www/applications/{{ .Values.appID }}/public_html
+    wp core download --path=. --allow-root --force
+    wp config create --dbname={{ .Values.wp.dbName}} --dbuser={{ .Values.wp.dbUser}} --dbpass={{ .Values.wp.dbPassword}} --dbprefix=wp_ --dbhost={{ .Values.wp.dbHost}}:{{ .Values.wp.dbPort}} --allow-root
+    wp config set WP_DEBUG false --allow-root
+    wp config set FS_METHOD direct --allow-root
+    wp config set FS_CHMOD_DIR "(0775 & ~ umask())" --raw --allow-root
+    wp config set FS_CHMOD_FILE "(0664 & ~ umask())" --raw --allow-root
+    wp core install --url={{ .Values.wp.domainName}} --title="WordPress Dev" --admin_user={{ .Values.wp.userLogin}} --admin_password={{ .Values.wp.userPassword}} --admin_email={{ .Values.wp.userLogin}} --allow-root
+{{- if eq .Values.wp.type "woocommerce" }}
+    wp plugin install woocommerce --allow-root --activate --force
+{{- end }}
+    wp plugin install litespeed-cache --activate --allow-root --insecure --force
+    curl -O https://raw.githubusercontent.com/cloudways-lab/platform-elements/master/cw-ls.data
+    wp litespeed-option import cw-ls.data --allow-root
+    rm -rf cw-ls.data
+    echo "pre-install finished"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "litespeed.fullname" . }}-pre-install
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "1"
+spec:
+  template:
+    spec:
+      containers:
+      - name: pre-install
+        image: {{ .Values.image }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        workingDir: /var/www/
+        command: ["bash", "/scripts/pre-install.sh"]
+        volumeMounts:
+          - name: pre-install
+            mountPath: /scripts
+            readOnly: true
+          - mountPath: /var/www/
+            name: home
+      volumes:
+      - name: home
+        persistentVolumeClaim:
+          claimName: {{ .Values.pvc.name }}
+      - name: pre-install
+        configMap:
+          name: {{ template "litespeed.fullname" . }}-pre-install
+      restartPolicy: OnFailure
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecretsName }}
+  backoffLimit: 20
+  completions: 1
+  parallelism: 1

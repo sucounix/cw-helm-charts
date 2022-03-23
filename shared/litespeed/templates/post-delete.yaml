@@ -1,0 +1,35 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "litespeed.fullname" . }}-post-delete
+  annotations:
+    "helm.sh/hook": "post-delete"
+    "helm.sh/hook-weight": "0"
+  labels:
+    userID: {{ .Values.userID | quote }}
+    appID: {{ .Values.appID | quote }}
+    version: {{ .Chart.Version | quote }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: pre-delete
+        image: {{ .Values.image }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        command: ["rm", "-rf", "/var/www/applications/{{ .Values.appID }}"]
+        volumeMounts:
+          - mountPath: /var/www/
+            name: home
+      volumes:
+        - name: home
+          persistentVolumeClaim:
+            claimName: {{ .Values.pvc.name }}
+      restartPolicy: OnFailure
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecretsName }}
+  backoffLimit: 20
+  completions: 1
+  parallelism: 1

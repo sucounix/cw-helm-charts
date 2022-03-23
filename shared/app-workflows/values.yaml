@@ -1,0 +1,70 @@
+env: "dev"
+region: ""
+
+serviceAccount:
+  eventSourceServiceAccount:
+    name: "sa-app-eventsource"
+    annotations: {}
+  workflowServiceAccount:
+    name: "sa-app-workflow"
+    annotations: {}
+
+app:
+  imageName: us-docker.pkg.dev/shared-buckets-333815/kubepy/kubepy
+  imageTag: prod
+
+gcp:
+  projectId: ""
+  pubSubProjectId: ""
+  sub:
+    addAppTopic: ""
+    deleteAppTopic: ""
+    updateAppTopic: ""
+    jsonBody: true
+  pub:
+    stepOperationTopic: ""
+    statusOperationTopic: ""
+    deleteAppTopic: ""
+    updateAppTopic: ""
+
+db:
+  secretManager:
+    dev:
+      us-west1: shared-buckets-dev-us-west1-mysql-secret
+      us-west2: shared-buckets-dev-us-west2-mysql-secret
+      us-east1: shared-buckets-dev-us-east1-mysql-secret
+    stg:
+      us-east4: shared-buckets-stg-us-east4-mysql-secret
+  host:
+    dev:
+      us-west1: 10.72.112.39
+      us-west2: 10.72.113.32
+      us-east1: 172.28.0.2
+    stg:
+      us-east4: 172.19.0.2
+wordpress:
+  chartName: wordpress
+  chartVersion: latest
+  repositoryName: cloudways-helm-private
+  repositoryNamespace: cloudways-system
+
+  release:
+    # Interval at which to reconcile the Helm release.
+    interval: 5m
+    # Timeout is the time to wait for any individual Kubernetes operation (like Jobs for hooks) during the performance of a Helm action. 
+    timeout: 15m
+    # Interval at which to check the v1beta1.Source for updates. Defaults to ‘HelmReleaseSpec.Interval’.
+    chartInterval: 1m
+
+slacksecret:
+  containers:
+    image: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    name: mypod
+    resources:
+      requests:
+        cpu: 100m
+ 
+  volumes:
+    name: secrets
+    secretProviderClass: "slack-token"
+  

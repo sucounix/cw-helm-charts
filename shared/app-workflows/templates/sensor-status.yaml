@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: {{ include "status-app-workflow.name" . }}
+spec:
+  template:
+    serviceAccountName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+  dependencies:
+    - name: body
+      eventSourceName: status-app-workflow
+      eventName: status-app-workflow-slack
+  triggers:
+    - template:
+        name: slack-trigger
+        slack:
+          channel: general
+          # message: hello world
+          slackToken:
+            key: token
+            name: slack-secret
+      parameters:     
+        - src:
+            dependencyName: body
+            dataKey: body.spec
+          dest: slack.message

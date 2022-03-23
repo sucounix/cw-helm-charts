@@ -1,0 +1,20 @@
+{{- if .Values.wordpress.initCloudSql.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "wordpress.fullname" . }}-wait-sh
+data:
+  wait.sh: |
+    #!/bin/bash
+    touch /tmp/sql.log
+    /cloud_sql_proxy \
+    -ip_address_types=PRIVATE \
+    -instances={{ get (get .Values.cloudsql.connectionName .Values.env) .Values.region }}=tcp:3306 > /tmp/sql.log 2>&1 &
+    sleep 3
+    check=$(cat /tmp/sql.log | grep "Listening on 127.0.0.1:3306")
+    if [ -z "$check" ]; then
+      exit 1;
+    else
+      exit 0;
+    fi;
+{{- end }}

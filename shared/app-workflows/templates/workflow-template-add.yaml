@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: {{ include "add-app-workflow.name" . }}
+spec:
+  serviceAccountName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+  templates:
+    - name: create-ns
+      resource:
+        action: apply
+        manifest: |
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{`{{workflow.parameters.app_id}}`}}"
+    - name: helm-release
+      resource:
+        action: apply
+        manifest: |
+          apiVersion: helm.toolkit.fluxcd.io/v2beta1
+          kind: HelmRelease
+          metadata:
+            name: "{{`{{workflow.parameters.app_id}}`}}"
+            namespace: "{{`{{workflow.parameters.app_id}}`}}"
+          spec:
+            interval: {{ .Values.wordpress.release.interval }}
+            timeout: {{ .Values.wordpress.release.timeout }}
+            chart:
+              spec:
+                chart: {{ .Values.wordpress.chartName }}
+                sourceRef:
+                  kind: HelmRepository
+                  name: {{ .Values.wordpress.repositoryName }}
+                  namespace: {{ .Values.wordpress.repositoryNamespace }}
+                interval: {{ .Values.wordpress.release.chartInterval }}
+                {{- if ne .Values.wordpress.chartVersion "latest" }}
+                version: {{ .Values.wordpress.chartVersion }}
+                {{- end }}
+            values:
+              {{`{{workflow.parameters.values}}`}}
+
+    - name: watch-helmrelease-readiness
+      container:
+        image: "{{ .Values.app.imageName }}:{{ .Values.app.imageTag }}"
+        command: ["python"]
+        args: 
+        - "add_app.py"
+        - {{ .Values.gcp.pubSubProjectId }}
+        - "{{`{{workflow.parameters.operation_id}}`}}"
+        - {{ .Values.gcp.pub.statusOperationTopic }}
+        - "{{`{{workflow.parameters.app_id}}`}}"
+        - {{ .Values.gcp.projectId }}
+        - "{{`{{workflow.parameters.steps}}`}}"
+
+        - {{ .Values.gcp.pub.stepOperationTopic }}
+        env:
+        - name: DB_HOST
+          value: {{ get (get .Values.db.host .Values.env) .Values.region }}
+        - name: SECRET_ID
+          value: {{ get (get .Values.db.secretManager .Values.env) .Values.region }}
+    # - name: watch-gcp-readiness-and-grant-user
+    #   container:
+    #     image: "{{ .Values.app.imageName }}:{{ .Values.app.imageTag }}"
+    #     imagePullPolicy: Always
+    #     command: ["python"]
+    #     args: 
+    #     - "gcp_status_grant.py"
+    #     - {{ .Values.gcp.pubSubProjectId }}
+    #     - "{{`{{workflow.parameters.operation_id}}`}}"
+    #     - {{ .Values.gcp.pub.addAppTopic }}
+    #     - "{{`{{workflow.parameters.app_id}}`}}"
+    #     - {{ .Values.gcp.projectId }}
+    #     env:
+    #     - name: DB_HOST
+    #       value: {{ get (get .Values.db.host .Values.env) .Values.region }}
+    #     - name: SECRET_ID
+    #       value: {{ get (get .Values.db.secretManager .Values.env) .Values.region }}

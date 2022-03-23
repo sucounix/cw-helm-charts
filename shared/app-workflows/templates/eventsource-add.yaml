@@ -1,0 +1,12 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: {{ include "add-app-workflow.name" . }}
+spec:
+  template:
+    serviceAccountName: {{ .Values.serviceAccount.eventSourceServiceAccount.name }}
+  pubSub:
+    add-app:
+      jsonBody: {{ .Values.gcp.sub.jsonBody }}
+      projectID: {{ .Values.gcp.pubSubProjectId }}
+      topic: {{ .Values.gcp.sub.addAppTopic }}

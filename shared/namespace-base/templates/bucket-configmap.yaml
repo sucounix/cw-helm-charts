@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bucket-configmap-id
+data:
+  bucketID: {{ .Values.bucketID | quote }}
+  environment: {{ .Values.env| quote }}

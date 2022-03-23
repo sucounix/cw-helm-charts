@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "wordpress.fullname" . }}
+  annotations:
+    {{- range $key, $value := .Values.wordpress.service.annotations }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    cloud.google.com/backend-config: '{"default": "{{ template "wordpress.fullname" . }}"}'
+  labels:
+  {{- range $key, $value := .Values.wordpress.service.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+    app: {{ template "wordpress.fullname" . }}
+    version: {{ $.Chart.Version | quote }}
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.wordpress.service.port }}
+      targetPort: {{ .Values.wordpress.service.targetPort }}
+  selector:
+    app: {{ template "wordpress.fullname" . }}
+  type: {{ .Values.wordpress.service.type }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "wordpress.fullname" . }}-external
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ template "wordpress.hostname" . }}
+spec:
+  type: ExternalName
+  externalName: {{ template "region.shortname" . }}-{{ .Values.env }}.cloudwayssites.com

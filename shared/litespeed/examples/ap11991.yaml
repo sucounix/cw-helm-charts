@@ -1,0 +1,31 @@
+
+deploymentType: production
+
+app: ap11991
+
+userID: okitup
+env: prod
+
+image: cloudways/openlitespeed:7.4-prod
+
+replicasCount: 1
+
+hpa:
+  maxReplicas: 30
+  cpuUtil: 600
+  memUtil: 300
+
+hosts:
+  - wpmultisite-dev3002-ap11999.cloudwaysk8s.com
+
+wp:
+  oldDomainName: wordpress-355360-1364458.cloudwaysapps.com
+  domainName: wpmultisite-dev3002-ap11999.cloudwaysk8s.com
+  dbUser: admin
+  dbPassword: fv4q3qsm3hc3bg5u
+  dbHost: db-mysql-nyc1-28214-do-user-8140245-0.b.db.ondigitalocean.com
+  dbPort: 25060
+  dbName: defaultdb
+  userLogin: josh@domain.com
+  userPassword: password
+  type: normal

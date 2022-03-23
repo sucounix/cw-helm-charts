@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ssh-user-conf-secret
+type: Opaque
+stringData:
+  authorized_keys: |
+    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEAx1xj43/jhzCiwzZAxv2Jni9JUfOHkim4AZGdsG118 user@host
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-options-configmap
+data:
+  WORDPRESS_CONFIG_EXTRA: |
+    define('WP_MEMORY_LIMIT', '64M');
+    @ini_set( 'upload_max_size', '64M' );
+    @ini_set( 'post_max_size', '64M');
+    @ini_set( 'max_execution_time', '300' );
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "wordpress.fullname" . }}-opcache-options
+data:
+  opcache-recommended.ini: |
+    opcache.memory_consumption={{ .Values.wordpress.phpParams.opcache_memory_consumption }}
+    opcache.interned_strings_buffer={{ .Values.wordpress.phpParams.opcache_interned_strings_buffer }}
+    opcache.max_accelerated_files={{ .Values.wordpress.phpParams.opcache_max_accelerated_files }}
+    opcache.revalidate_freq={{ .Values.wordpress.phpParams.opcache_revalidate_freq }}
+    opcache.fast_shutdown={{ .Values.wordpress.phpParams.opcache_fast_shutdown }}

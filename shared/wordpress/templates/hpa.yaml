@@ -1,0 +1,31 @@
+{{- if .Values.wordpress.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  scaleTargetRef:
+    apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+    kind: Deployment
+    name: {{ .Release.Name | quote }}
+  minReplicas: {{ .Values.wordpress.autoscaling.minReplicas }}
+  maxReplicas: {{ get .Values.wordpress.autoscaling.maxReplicas .Values.tier }}
+  metrics:
+    {{- if .Values.wordpress.autoscaling.targetCPU }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.wordpress.autoscaling.targetCPU }}
+    {{- end }}
+    {{- if .Values.wordpress.autoscaling.targetMemory }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.wordpress.autoscaling.targetMemory  }}
+    {{- end }}
+{{- end }}

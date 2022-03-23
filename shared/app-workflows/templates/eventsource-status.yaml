@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: {{ include "status-app-workflow.name" . }}
+spec:
+  template:
+    serviceAccountName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+  resource:
+   status-app-workflow-slack:
+     namespace: app-workflows
+     group: "argoproj.io"
+     version: v1alpha1
+     resource: workflows
+     eventTypes:
+       - ADD
+       - UPDATE
+     filter:
+        labels:
+         - key: workflows.argoproj.io/completed
+           operation: ==
+           value: "true"
+         - key: workflows.argoproj.io/phase
+           operation: ==
+           value: "Failed"
+         - key: workflows.argoproj.io/phase
+           operation: ==
+           value: "Error"           

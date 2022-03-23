@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "wordpress.fullname" . }}
+  annotations:
+    {{- range $key, $value := .Values.wordpress.annotations }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  labels:
+  {{- range $key, $value := .Values.wordpress.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+    app: {{ template "wordpress.fullname" . }}
+    version: {{ $.Chart.Version | quote }}
+spec:
+  replicas: {{ .Values.wordpress.replicasCount }}
+  selector:
+    matchLabels:
+      app: {{ template "wordpress.fullname" . }}
+  strategy:
+    type: {{ .Values.wordpress.strategyType }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "wordpress.fullname" . }}
+        app.kubernetes.io/instance: wordpress
+        tier: app
+    spec:
+      affinity:
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.wordpress.podAntiAffinityPreset "context" $) | nindent 10 }}
+      serviceAccountName: {{ template "wordpress.fullname" . }}
+      volumes:
+      - name: wordpress-persistent-storage
+        persistentVolumeClaim:
+          claimName: {{ template "wordpress.fullname" . }}
+      - name: php-ini-volume
+        configMap:
+          name: {{ template "wordpress.fullname" . }}-php-ini
+          items:
+          - key: "php.ini"
+            path: "php.ini"
+      - name: opcache-options-volume
+        configMap:
+          name: {{ template "wordpress.fullname" . }}-opcache-options
+          items:
+          - key: "opcache-recommended.ini"
+            path: "opcache-recommended.ini"
+{{- if .Values.wordpress.initCloudSql.enabled }}
+      - name: wait-sh
+        configMap:
+          name: {{ template "wordpress.fullname" . }}-wait-sh
+          defaultMode: 511
+          items:
+          - key: "wait.sh"
+            path: "wait.sh"
+{{- end }}
+{{- if .Values.wordpress.initCloudSql.enabled }}
+      initContainers:
+      - name: wait-for-db
+        image: {{ .Values.cloudsql.image }}-buster
+        command:
+        - /bin/bash
+        - -c
+        - /wait.sh
+        resources:
+          requests:
+            memory: {{ .Values.cloudsql.resources.memory }}
+            cpu: {{ .Values.cloudsql.resources.cpu }}
+        volumeMounts:
+        - name: wait-sh
+          mountPath: /wait.sh
+          subPath: wait.sh
+{{- end }}
+      containers:
+      - name: wordpress
+        image: "{{ .Values.wordpress.imageName }}:{{ .Values.wordpress.imageTag }}"
+        env:
+        - name: WORDPRESS_DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-db
+              key: host
+        - name: WORDPRESS_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-db
+              key: user
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-db
+              key: password
+        - name: WORDPRESS_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-db
+              key: db
+        - name: WORDPRESS_DOMAIN
+          value: {{ template "wordpress.hostname" . }}
+        - name: WORDPRESS_USER
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-wp
+              key: user
+        - name: WORDPRESS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-wp
+              key: password
+        - name: WORDPRESS_TIMEZONE
+          value: {{ .Values.wordpress.timeZone }}
+        envFrom:
+        - configMapRef:
+            name: wordpress-options-configmap
+        - configMapRef:
+            name: {{ template "wordpress.fullname" . }}-litespeed-httpd
+        ports:
+        - containerPort: 80
+          name: wp-svc
+        resources:
+          requests:
+            memory: {{ get .Values.wordpress.resources.requests.memory .Values.tier }}
+            cpu: {{ get .Values.wordpress.resources.requests.cpu .Values.tier }}
+          limits:
+            memory: {{ get .Values.wordpress.resources.limits.memory .Values.tier }}
+            cpu: {{ get .Values.wordpress.resources.limits.cpu .Values.tier }}
+        volumeMounts:
+        - name: wordpress-persistent-storage
+          mountPath: /var/www/vhosts/localhost/html/public_html/
+        - name: php-ini-volume
+          mountPath: /usr/local/etc/php/php.ini
+          subPath: php.ini
+        - name: opcache-options-volume
+          mountPath: /usr/local/etc/php/conf.d/opcache-recommended.ini
+          subPath: opcache-recommended.ini
+      - name: cloud-sql-proxy
+        image: {{ .Values.cloudsql.image }}
+        command:
+          - "/cloud_sql_proxy"
+          - "-ip_address_types=PRIVATE"
+          - "-instances={{ get (get .Values.cloudsql.connectionName .Values.env) .Values.region }}=tcp:3306"
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          requests:
+            memory: {{ .Values.cloudsql.resources.memory }}
+            cpu: {{ .Values.cloudsql.resources.cpu }}

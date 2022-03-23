@@ -1,0 +1,15 @@
+apiVersion: networking.x-k8s.io/v1alpha1
+kind: HTTPRoute
+metadata:
+  name: {{ template "wordpress.fullname" . }}
+  labels:
+    gateway: {{ .Values.wordpress.ingress.gateway }}
+spec:
+  gateways:
+    allow: All
+  hostnames:
+  - {{ template "wordpress.hostname" . }}
+  rules:
+  - forwardTo:
+    - serviceName: {{ template "wordpress.fullname" . }}
+      port: {{ .Values.wordpress.service.port }}

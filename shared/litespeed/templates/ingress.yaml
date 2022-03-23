@@ -1,0 +1,50 @@
+
+{{- if .Values.ingress.enabled -}}
+{{- $serviceName := include "litespeed.fullname" . -}}
+{{- $ingressPath := .Values.ingress.path -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "litespeed.fullname" . }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    userID: {{ .Values.userID | quote }}
+    appID: {{ .Values.appID | quote }}
+    version: {{ .Chart.Version | quote }}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+      {{ if eq .Values.env "prod" }}
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      {{ else }}
+      cert-manager.io/cluster-issuer: "letsencrypt-staging"
+      {{ end }}
+spec:
+  rules:
+  {{- range .Values.hosts }}
+    - host: {{ . }}
+      http:
+        paths:
+          - path: {{ $ingressPath }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $serviceName }}
+                port:
+                  number: 80
+  {{- end }}
+  tls:
+    {{- if .Values.ingress.issuer.letsencrypt }}
+    - secretName: {{ template "litespeed.fullname" . }}-tls
+    {{- else }}
+    - secretName: {{ template "litespeed.fullname" . }}-pre-owned-tls
+    {{- end }}
+      hosts:
+        {{- range .Values.hosts }}
+        - {{.}}
+        {{- end }}
+
+{{- end }}

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  hard:
+    cpu: {{ get .Values.quota.cpu .Values.tier }}
+    memory: {{ get .Values.quota.memory .Values.tier }}
+    pods: {{ get .Values.quota.pods .Values.tier }}

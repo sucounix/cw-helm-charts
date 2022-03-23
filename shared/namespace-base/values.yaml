@@ -1,0 +1,22 @@
+env: dev
+bucketID: bucket1234
+
+sshImage: "cloudways/k8s-ssh:prod"
+sshSecrets:
+  ssh_password: password
+  ssh_publickey: publickey
+
+resourcesQuota:
+  namespace: default
+  cpu:
+    requests: "300m"
+    limit: "2"
+  memory:
+    requests: "300Mi"
+    limit: "2Gi"
+
+pvc:
+  name: nfs-claim
+  storageClass: nfs-client
+  storage: 500Mi
+  accessModes: ReadWriteMany

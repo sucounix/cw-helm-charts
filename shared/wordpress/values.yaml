@@ -1,0 +1,289 @@
+tier: low
+env: stg
+region: ""
+phpVersion: ""
+regionShort:
+  us-east4: use4
+  us-east1: use1
+
+gcp:
+  projectIds:
+    dev: backend-dev-b335
+    stg: backend-stg-5f6a
+    prod: backend-prod-7065
+
+quota:
+  cpu:
+    low: 5
+    medium: 10
+    high: 1000
+  memory:
+    low: 10Gi
+    medium: 20Gi
+    high: 200Gi
+  pods:
+    low: 20
+    medium: 30
+    high: 50
+
+# Wordpress deployment values
+wordpress:
+  phpParams:
+    log_errors: "on"
+    memory_limit: "1024M"
+    max_execution_time: "600"
+    date_timezone: "UTC"
+    max_input_time: "300"
+    post_max_size: 100M
+    upload_max_filesize: 100M
+    max_input_vars: "3000"
+    max_file_uploads: "20"
+    display_errors: "off"
+    opcache_memory_consumption: 128
+    opcache_interned_strings_buffer: 8
+    opcache_max_accelerated_files: 4000
+    opcache_revalidate_freq: 2
+    opcache_fast_shutdown: 1
+
+  httpd:
+    LS_IN_MEM_BUF_SIZE: 200M
+    LS_ADMIN_EMAILS: k8s@cloudways.com
+    LS_AUTO_RESTART: '1'
+    LS_MAX_CONNECTIONS: '10000'
+    LS_MEM_SOFT_LIMIT: 1460M
+    LS_MEM_HARD_LIMIT: 1470M
+    LS_MAX_CONNS: '120'
+    K8S_SUBNETS: 10.0.0.0/16T
+    PHP_LSAPI_CHILDREN: '120'
+    PHP_LSAPI_MAX_REQUESTS: '5000'
+    LSAPI_AVOID_FORK: 200M
+    LSAPI_PGRP_MAX_IDLE: '86400'
+
+  labels:
+    role: wp
+
+  annotations: {}
+
+  replicasCount: 1
+  strategyType: RollingUpdate
+  imageName: us-docker.pkg.dev/shared-buckets-333815/wordpress/k8s-wordpress
+  imageTag: prod
+  budget:
+    enabled: true
+    minAvailable: "80%"
+  resources:
+    limits:
+      memory:
+        low: 500Mi
+        medium: 1Gi
+        high: 4Gi
+      cpu:
+        low: 1
+        medium: 2
+        high: 3
+    requests:
+      memory:
+        low: 128Mi
+        medium: 512Mi
+        high: 1Gi
+      cpu:
+        low: 50m
+        medium: 250m
+        high: 1
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas:
+      low: 10
+      medium: 20
+      high: 40
+    targetMemory: 75
+    targetCPU: 75
+
+  podAntiAffinityPreset: soft
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 80
+    labels: {}
+    annotations: {}
+
+  ingress:
+    gateway: external-gateway
+
+  initCloudSql:
+    enabled: true
+
+  adminCreds:
+    displayName: Admin
+    userLogin: wp-admin
+    managementName: admin
+    managementEmail: admin@cloudways.com
+    password: password
+
+  timeZone: "Europe/London"
+
+
+sshd:
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "50M"
+      cpu: "25m"
+    limits:
+      memory: "500M"
+      cpu: "500m"
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: sshd
+          namespaces:
+            - "{{ .Release.Namespace }}"
+          topologyKey: kubernetes.io/hostname
+        weight: 1
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: wordpress
+          namespaces:
+            - "{{ .Release.Namespace }}"
+          topologyKey: kubernetes.io/hostname
+        weight: 1
+  budget:
+    enabled: true
+    minAvailable: 1
+  initCloudSql:
+    enabled: true
+  autoscaling:
+    updateMode: Auto
+
+  credentials: []
+
+objectcache:
+  imageName: us-docker.pkg.dev/shared-buckets-333815/amp/k8s-amp
+  imageTag: prod
+  enabled: true
+  resources:
+    requests:
+      memory: "50M"
+      cpu: "25m"
+    limits:
+      memory: "500M"
+      cpu: "500m"
+
+
+pvc:
+  storageClass: nfs-client
+  storage: 500Mi
+  accessModes: ReadWriteMany
+  labels: {}
+  annotations: {}
+
+cloudsql:
+  image: gcr.io/cloudsql-docker/gce-proxy:1.28.1
+  instances:
+    dev:
+      us-west1: shared-buckets-dev-us-west1-mysql-3ba46b40
+      us-west2: shared-buckets-dev-us-west2-mysql-0d0dfcdd
+      us-east1: shared-buckets-dev-us-east1-mysql-e52f3e12
+    stg:
+      us-east4: shared-buckets-stg-us-east4-mysql-1a335d1a
+
+  # Connection name can be found on the GCP console by going to the overview of the SQl instance, under the "Connection name" label or by running the gcloud command
+  # gcloud sql instances describe <sql instance name> | grep connectionName
+  connectionName:
+    dev:
+      us-west1: shared-buckets-dev-532647:us-west1:shared-buckets-dev-us-west1-mysql-3ba46b40
+      us-west2: shared-buckets-dev-532647:us-west2:shared-buckets-dev-us-west2-mysql-0d0dfcdd
+      us-east1: backend-dev-b335:us-east1:shared-buckets-dev-us-east1-mysql-e52f3e12
+    stg:
+      us-east4: backend-stg-5f6a:us-east4:shared-buckets-stg-us-east4-mysql-1a335d1a
+  resources:
+    memory: "1Gi"
+    cpu: "500m"
+
+db:
+  host: "127.0.0.1"
+  charset: "utf8mb4"
+  collation: "utf8mb4_bin"
+  password: "alskdm"
+  userHost: "%"
+
+redis:
+  architecture: standalone
+
+  auth:
+    enabled: false
+
+  pdb:
+    create: true
+
+  commonConfiguration: |-
+      tcp-backlog 511
+      tcp-keepalive 300
+      save ""
+      stop-writes-on-bgsave-error no
+      maxmemory 2gb
+      maxmemory-policy allkeys-lru
+      maxmemory-samples 10
+      protected-mode "no"
+      appendonly no
+      client-output-buffer-limit normal 0 0 0
+      jemalloc-bg-thread yes
+
+  master:
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: redis
+            namespaces:
+              - "{{ .Release.Namespace }}"
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+      podAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/instance: wordpress
+            namespaces:
+              - "{{ .Release.Namespace }}"
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+    configuration: |-
+      tcp-backlog 511
+      tcp-keepalive 300
+      save ""
+      stop-writes-on-bgsave-error no
+      maxmemory 2gb
+      maxmemory-policy allkeys-lru
+      maxmemory-samples 10
+      protected-mode "no"
+      appendonly no
+      client-output-buffer-limit normal 0 0 0
+      jemalloc-bg-thread yes
+
+    disableCommands: []
+
+    resources:
+      limits:
+        memory: 2Gi
+        cpu: 1
+      requests:
+        memory: 2Gi
+        cpu: 1
+    persistence:
+      enabled: false
+
+  autoscaling:
+    updateMode: Auto

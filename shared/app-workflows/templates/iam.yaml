@@ -1,0 +1,105 @@
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.eventSourceServiceAccount.name }}
+  annotations:
+    cnrm.cloud.google.com/project-id: {{ .Values.gcp.projectId }}
+spec:
+  displayName: {{ .Values.serviceAccount.eventSourceServiceAccount.name }}
+---
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicy
+metadata:
+  name: {{ .Values.serviceAccount.eventSourceServiceAccount.name }}
+  annotations:
+    cnrm.cloud.google.com/project-id: {{ .Values.gcp.projectId }}
+spec:
+  resourceRef:
+    apiVersion: iam.cnrm.cloud.google.com/v1beta1
+    kind: IAMServiceAccount
+    name: {{ .Values.serviceAccount.eventSourceServiceAccount.name }}
+  bindings:
+    - role: roles/iam.workloadIdentityUser
+      members:
+        - {{ printf "serviceAccount:%s.svc.id.goog[%s/%s]" .Values.gcp.projectId .Release.Namespace .Values.serviceAccount.eventSourceServiceAccount.name }}
+---
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: {{ .Values.serviceAccount.eventSourceServiceAccount.name }}-pubsub-editor
+  annotations:
+    cnrm.cloud.google.com/project-id: {{ .Values.gcp.projectId }}
+spec:
+  member: serviceAccount:{{ .Values.serviceAccount.eventSourceServiceAccount.name }}@{{ .Values.gcp.projectId }}.iam.gserviceaccount.com
+  role: roles/pubsub.editor
+  resourceRef:
+    apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+    kind: Project
+    external: projects/{{ .Values.gcp.pubSubProjectId }}
+---
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+  annotations:
+    cnrm.cloud.google.com/project-id: {{ .Values.gcp.projectId }}
+spec:
+  displayName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+---
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicy
+metadata:
+  name: {{ .Values.serviceAccount.workflowServiceAccount.name }}-ksa-gsa
+  annotations:
+    cnrm.cloud.google.com/project-id: {{ .Values.gcp.projectId }}
+spec:
+  resourceRef:
+    apiVersion: iam.cnrm.cloud.google.com/v1beta1
+    kind: IAMServiceAccount
+    name: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+  bindings:
+    - role: roles/iam.workloadIdentityUser
+      members:
+        - {{ printf "serviceAccount:%s.svc.id.goog[%s/%s]" .Values.gcp.projectId .Release.Namespace .Values.serviceAccount.workflowServiceAccount.name }}
+---
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: {{ .Values.serviceAccount.workflowServiceAccount.name }}-sql-client
+  annotations:
+    cnrm.cloud.google.com/project-id: {{ .Values.gcp.projectId }}
+spec:
+  member: serviceAccount:{{ .Values.serviceAccount.workflowServiceAccount.name }}@{{ .Values.gcp.projectId }}.iam.gserviceaccount.com
+  role: roles/cloudsql.client
+  resourceRef:
+    apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+    kind: Project
+    external: projects/{{ .Values.gcp.projectId }}
+---
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: {{ .Values.serviceAccount.workflowServiceAccount.name }}-pubsub-pub
+  annotations:
+    cnrm.cloud.google.com/project-id: {{ .Values.gcp.projectId }}
+spec:
+  member: serviceAccount:{{ .Values.serviceAccount.workflowServiceAccount.name }}@{{ .Values.gcp.projectId }}.iam.gserviceaccount.com
+  role: roles/pubsub.publisher
+  resourceRef:
+    apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+    kind: Project
+    external: projects/{{ .Values.gcp.pubSubProjectId }}
+---
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: {{ .Values.serviceAccount.workflowServiceAccount.name }}-secret-manager
+  annotations:
+    cnrm.cloud.google.com/project-id: {{ .Values.gcp.projectId }}
+spec:
+  member: serviceAccount:{{ .Values.serviceAccount.workflowServiceAccount.name }}@{{ .Values.gcp.projectId }}.iam.gserviceaccount.com
+  role: roles/secretmanager.secretAccessor
+  resourceRef:
+    apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+    kind: Project
+    external: projects/{{ .Values.gcp.projectId }}

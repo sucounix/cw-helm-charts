@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "litespeed.fullname" . }}-post-upgrade
+  annotations:
+    {{- range $key, $value := .Values.annotations }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  labels:
+    userID: {{ .Values.userID | quote }}
+    appID: {{ .Values.appID | quote }}
+    version: {{ .Chart.Version | quote }}
+data:
+  post-upgrade.sh: |
+    #!/bin/bash
+    set -x
+    echo "upgrade starting"
+    cd /var/www/public_html
+    wp search-replace "{{ .Values.wp.oldDomainName }}" "{{ .Values.wp.domainName }}" --skip-plugins --skip-themes --allow-root
+    sed -i 's/https:\/\/{{ .Values.wp.oldDomainName }}/https:\/\/{{ .Values.wp.domainName }}/g' wp-config.php
+    echo "upgarde done"
+---
+{{- if .Values.wp.oldDomainName }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "litespeed.fullname" . }}-post-upgrade
+  annotations:
+    "helm.sh/hook": "post-upgrade"
+    "helm.sh/hook-weight": "1"
+spec:
+  template:
+    spec:
+      containers:
+      - name: post-upgrade
+        image: {{ .Values.image }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        workingDir: /var/www/
+        command: ["bash", "/scripts/post-upgrade.sh"]
+        volumeMounts:
+          - name: post-upgrade
+            mountPath: /scripts
+            readOnly: true
+          - mountPath: /var/www/
+            name: home
+      volumes:
+      - name: home
+        persistentVolumeClaim:
+          claimName: {{ .Values.pvc.name }}
+      - name: post-upgrade
+        configMap:
+          name: {{ template "litespeed.fullname" . }}-post-upgrade
+      restartPolicy: OnFailure
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecretsName }}
+  backoffLimit: 20
+  completions: 1
+  parallelism: 1
+{{- end }}

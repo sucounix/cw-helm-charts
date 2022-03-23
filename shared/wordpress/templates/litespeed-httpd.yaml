@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "wordpress.fullname" . }}-litespeed-httpd
+data:
+  LS_IN_MEM_BUF_SIZE: {{.Values.wordpress.httpd.LS_IN_MEM_BUF_SIZE }}
+  LS_ADMIN_EMAILS: {{.Values.wordpress.httpd.LS_ADMIN_EMAILS }}
+  LS_AUTO_RESTART: {{.Values.wordpress.httpd.LS_AUTO_RESTART | quote }}
+  LS_MAX_CONNECTIONS: {{.Values.wordpress.httpd.LS_MAX_CONNECTIONS | quote }}
+  LS_MEM_SOFT_LIMIT: {{.Values.wordpress.httpd.LS_MEM_SOFT_LIMIT }}
+  LS_MEM_HARD_LIMIT: {{.Values.wordpress.httpd.LS_MEM_HARD_LIMIT }}
+  LS_MAX_CONNS: {{.Values.wordpress.httpd.LS_MAX_CONNS | quote }}
+  K8S_SUBNETS: {{.Values.wordpress.httpd.K8S_SUBNETS }}
+  PHP_LSAPI_CHILDREN: {{.Values.wordpress.httpd.PHP_LSAPI_CHILDREN | quote }}
+  PHP_LSAPI_MAX_REQUESTS: {{.Values.wordpress.httpd.PHP_LSAPI_MAX_REQUESTS | quote }}
+  LSAPI_AVOID_FORK: {{.Values.wordpress.httpd.LSAPI_AVOID_FORK }}
+  LSAPI_PGRP_MAX_IDLE: {{.Values.wordpress.httpd.LSAPI_PGRP_MAX_IDLE | quote }}

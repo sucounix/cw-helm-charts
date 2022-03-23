@@ -1,0 +1,20 @@
+{{- if .Values.budget.enabled }}
+{{- if trimPrefix "v" .Capabilities.KubeVersion.Version | semverCompare ">1.20" -}}
+apiVersion: policy/v1
+{{- else }}
+apiVersion: policy/v1beta1
+{{- end }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "litespeed.fullname" . }}
+  labels:
+    name: {{ template "litespeed.fullname" . }}
+    userID: {{ .Values.userID | quote }}
+    appID: {{ .Values.appID | quote }}
+    version: {{ .Chart.Version | quote }}
+spec:
+  maxUnavailable: {{ .Values.budget.maxUnavailable}}
+  selector:
+    matchLabels:
+      name: {{ template "litespeed.fullname" . }}
+{{- end -}}

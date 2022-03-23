@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: {{ include "delete-app-workflow.name" . }}
+spec:
+  template:
+    serviceAccountName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+  dependencies:
+    - name: body
+      eventSourceName: {{ include "delete-app-workflow.name" . }}
+      eventName: delete-app
+  triggers:
+    - template:
+        name: delete-app-workflow
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: delete-app-workflow-
+              spec:
+                serviceAccountName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+                entrypoint: delete-app
+                arguments:
+                  parameters:
+                  - name: body
+                  - name: app_id
+                  - name: operation_id
+                templates:
+                - name: delete-app
+                  steps:
+                    - - name: delete-helm-release
+                        templateRef:
+                          name: {{ include "delete-app-workflow.name" . }}
+                          template: delete-helm-release
+                      - name: watch-helmrelease-removal
+                        templateRef:
+                          name: {{ include "delete-app-workflow.name" . }}
+                          template: watch-pod-removal
+                    - - name: delete-ns
+                        templateRef:
+                          name: {{ include "delete-app-workflow.name" . }}
+                          template: delete-ns
+          parameters:
+            - src:
+                dependencyName: body
+                dataKey: body
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: body
+                dataTemplate: "application{{`{{.Input.body.app_id }}`}}"
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: body
+                dataKey: body.operation_id
+              dest: spec.arguments.parameters.2.value

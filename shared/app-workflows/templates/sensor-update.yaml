@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: {{ include "update-app-workflow.name" . }}
+spec:
+  template:
+    serviceAccountName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+  dependencies:
+    - name: body
+      eventSourceName: {{ include "update-app-workflow.name" . }}
+      eventName: update-app
+  triggers:
+    - template:
+        name: update-app-workflow
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: update-app-workflow-
+              spec:
+                serviceAccountName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+                entrypoint: update-app
+                arguments:
+                  parameters:
+                  - name: body
+                  - name: app_id
+                  - name: operation_id
+                  - name: values
+                templates:
+                - name: update-app
+                  steps:
+                    - - name: update-release
+                        templateRef:
+                          name: {{ include "update-app-workflow.name" . }}
+                          template: helm-release
+                    - - name: watch-helmrelease-readiness
+                        templateRef:
+                          name: {{ include "update-app-workflow.name" . }}
+                          template: watch-helmrelease-readiness
+          parameters:
+            - src:
+                dependencyName: body
+                dataKey: body
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: body
+                dataTemplate: "application{{`{{.Input.body.app_id }}`}}"
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: body
+                dataKey: body.operation_id
+              dest: spec.arguments.parameters.2.value
+            - src:
+                dependencyName: body
+                dataKey: body.values
+              dest: spec.arguments.parameters.3.value

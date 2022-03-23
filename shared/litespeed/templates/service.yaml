@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "litespeed.fullname" . }}
+  labels:
+    userID: {{ .Values.userID | quote }}
+    appID: {{ .Values.appID | quote }}
+    version: {{ .Chart.Version | quote }}
+spec:
+  ports:
+  - name: http
+    port: {{ .Values.service.port }}
+    protocol: TCP
+    targetPort: 80
+  # Litepeed admin port
+  - name: ls-dash
+    port: 7080
+    protocol: TCP
+    targetPort: 7080
+  selector:
+    name: {{ template "litespeed.fullname" . }}
+  type: {{ .Values.service.type }}

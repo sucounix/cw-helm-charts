@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: ssh
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 2
+  revisionHistoryLimit: 3
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        name: ssh
+    spec:
+      containers:
+      - name: ssh
+        image: {{ .Values.sshImage }}
+        imagePullPolicy: Always
+        env:
+          - name: ssh_password
+            valueFrom:
+              secretKeyRef:
+                name: ssh-secret
+                key: ssh_password
+          - name: ssh_publickey
+            valueFrom:
+              secretKeyRef:
+                name: secret-ssh-publickey-auth
+                key: ssh_publickey
+        resources:
+          requests:
+            memory: "50M"
+            cpu: "25m"
+          limits:
+            memory: "500M"
+            cpu: "500m"
+        ports:
+        - name: ssh-22
+          containerPort: 22
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/www/
+          name: ssh-home
+      volumes:
+      - name: ssh-home
+        persistentVolumeClaim:
+          claimName: {{ .Values.pvc.name }}
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: cwprivateimg
+      tolerations:
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 60
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 60

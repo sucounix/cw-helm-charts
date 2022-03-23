@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  {{ template "wordpress.fullname" . }}-sshd
+  labels:
+    app: sshd
+    role: wp
+spec:
+  replicas: {{ .Values.sshd.replicaCount }}
+  selector:
+    matchLabels:
+      app: sshd
+      tier: admin
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: sshd
+        tier: admin
+    spec:
+      serviceAccountName: {{ template "wordpress.fullname" . }}
+      volumes:
+      - name: wordpress-persistent-storage
+        persistentVolumeClaim:
+          claimName: {{ template "wordpress.fullname" . }}
+      - name: ssh-user-conf-volume
+        secret:
+          secretName: ssh-user-conf-secret
+          items:
+          - key: "authorized_keys"
+            path: "authorized_keys"
+{{- if .Values.sshd.initCloudSql.enabled }}
+      - name: wait-sh
+        configMap:
+          name: {{ template "wordpress.fullname" . }}-wait-sh
+          defaultMode: 511
+          items:
+          - key: "wait.sh"
+            path: "wait.sh"
+{{- end }}
+{{- if .Values.sshd.initCloudSql.enabled }}
+      initContainers:
+      - name: wait-for-db
+        image: {{ .Values.cloudsql.image }}-buster
+        command:
+        - /bin/bash
+        - -c
+        - /wait.sh
+        resources:
+          requests:
+            memory: {{ .Values.cloudsql.resources.memory }}
+            cpu: {{ .Values.cloudsql.resources.cpu }}
+        volumeMounts:
+        - name: wait-sh
+          mountPath: /wait.sh
+          subPath: wait.sh
+{{- end }}
+      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.sshd.affinity "context" $) | nindent 8 }}
+      containers:
+      - name: sshd
+        image: us-docker.pkg.dev/shared-buckets-333815/k8s-ssh/k8s-ssh:prod
+        env:
+        - name: WORDPRESS_DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-db
+              key: host
+        - name: WORDPRESS_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-db
+              key: user
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-db
+              key: password
+        - name: WORDPRESS_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: secret-{{ template "wordpress.fullname" . }}-db
+              key: db
+        {{ $count := 0 }}
+        {{- range $k,$v := .Values.sshd.credentials }}
+        {{ $count = add $count 1 }}
+        - name: sshUsername_{{$count}}
+          value: {{ .username }}
+        - name: sshPassword_{{$count}}
+          valueFrom:
+            secretKeyRef:
+              name: "user-{{ .username }}-password"
+              key: ssh_password
+        {{- end }}
+        envFrom:
+        - configMapRef:
+            name: wordpress-options-configmap
+        resources:
+          requests:
+            memory: {{ .Values.sshd.resources.requests.memory }}
+            cpu: {{ .Values.sshd.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.sshd.resources.limits.memory }}
+            cpu: {{ .Values.sshd.resources.limits.cpu }}
+        volumeMounts:
+        - name: wordpress-persistent-storage
+          mountPath: /var/www/html/
+        - name: ssh-user-conf-volume
+          mountPath: /home/cwdev/.ssh/authorized_keys
+          subPath: authorized_keys
+        ports:
+        - containerPort: 22
+          name: sshd-svc
+      - name: cloud-sql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:latest
+        command:
+          - "/cloud_sql_proxy"
+          - "-ip_address_types=PRIVATE"
+          - "-instances={{ get (get .Values.cloudsql.connectionName .Values.env) .Values.region }}=tcp:3306"
+        resources:
+          requests:
+            memory: {{ .Values.cloudsql.resources.memory }}
+            cpu: {{ .Values.cloudsql.resources.cpu }}
+        securityContext:
+          runAsNonRoot: true

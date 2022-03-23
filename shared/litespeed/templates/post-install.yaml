@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "litespeed.fullname" . }}-post-install
+  annotations:
+    "helm.sh/hook": "post-install"
+    "helm.sh/hook-weight": "0"
+  labels:
+    userID: {{ .Values.userID | quote }}
+    appID: {{ .Values.appID | quote }}
+    version: {{ .Chart.Version | quote }}
+data:
+  post-install.sh: |
+    #!/bin/bash
+    set -x
+    set -e
+    echo Waiting for Redis to become available
+    sleep 30
+    cd /var/www/applications/{{ .Values.appID }}/public_html
+
+    curl -O -J -L https://objectcache.pro/plugin/redis-cache-pro.zip?token=e279430effe043b8c17d3f3c751c4c0846bc70c97f0eaaea766b4079001c
+    unzip redis-cache-pro-*.zip -d .
+    mkdir -p wp-content/mu-plugins
+    cp redis-cache-pro/stubs/mu-plugin.php wp-content/mu-plugins/redis-cache-pro.php
+    mv redis-cache-pro wp-content/mu-plugins
+    rm -rf redis-cache-pro-*.zip
+    WP_REDIS_CONFIG=$(cat <<-END
+    [
+    "token" => "e279430effe043b8c17d3f3c751c4c0846bc70c97f0eaaea766b4079001c",
+    "host" => "{{ .Values.appID }}-redis-master.default.svc.cluster.local",
+    "port" => "6379",
+    "database" => "0",
+    "timeout" => "2.5",
+    "read_timeout" => "2.5",
+    "split_alloptions" => true,
+    "async_flush" => true,
+    "client" => "phpredis",
+    "compression" => "zstd",
+    "serializer" => "igbinary",
+    "prefetch" => true,
+    "debug" => false,
+    "save_commands" => false,
+    ]
+    END
+    )
+    wp config set --add --raw WP_REDIS_CONFIG "${WP_REDIS_CONFIG}" --allow-root
+    wp config set --add --raw WP_REDIS_DISABLED false --allow-root
+    wp redis enable --allow-root
+    wp plugin delete $(wp plugin list --status=inactive --field=name --allow-root) --allow-root
+    wp cache flush --allow-root
+    cd ..
+    chown -R www-data:www-data public_html
+    find public_html -type d -exec chmod 775 {} +
+    find public_html -type f -exec chmod 664 {} +
+    echo "" >> public_html/.htaccess
+    echo "post-install finished"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "litespeed.fullname" . }}-post-install
+  annotations:
+    "helm.sh/hook": "post-install"
+    "helm.sh/hook-weight": "1"
+spec:
+  template:
+    spec:
+      containers:
+      - name: post-install
+        image: {{ .Values.image }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        workingDir: /var/www/
+        command: ["bash", "/scripts/post-install.sh"]
+        volumeMounts:
+          - name: post-install
+            mountPath: /scripts
+            readOnly: true
+          - mountPath: /var/www/
+            name: home
+      volumes:
+      - name: home
+        persistentVolumeClaim:
+          claimName: {{ .Values.pvc.name }}
+      - name: post-install
+        configMap:
+          name: {{ template "litespeed.fullname" . }}-post-install
+      restartPolicy: OnFailure
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecretsName }}
+  backoffLimit: 20
+  completions: 1
+  parallelism: 1

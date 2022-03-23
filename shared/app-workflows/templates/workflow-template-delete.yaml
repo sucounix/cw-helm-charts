@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: {{ include "delete-app-workflow.name" . }}
+spec:
+  serviceAccountName: {{ .Values.serviceAccount.workflowServiceAccount.name }}
+  templates:
+    - name: delete-ns
+      resource:
+        action: delete
+        manifest: |
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{`{{workflow.parameters.app_id}}`}}"
+    - name: delete-helm-release
+      resource:
+        action: delete
+        manifest: |
+          apiVersion: helm.toolkit.fluxcd.io/v2beta1
+          kind: HelmRelease
+          metadata:
+            name: "{{`{{workflow.parameters.app_id}}`}}"
+            namespace: "{{`{{workflow.parameters.app_id}}`}}"
+          spec:
+            interval: {{ .Values.wordpress.release.interval }}
+            timeout: {{ .Values.wordpress.release.timeout }}
+            chart:
+              spec:
+                chart: {{ .Values.wordpress.chartName }}
+                sourceRef:
+                  kind: HelmRepository
+                  name: {{ .Values.wordpress.repositoryName }}
+                  namespace: {{ .Values.wordpress.repositoryNamespace }}
+                interval: {{ .Values.wordpress.release.chartInterval }}
+    - name: watch-pod-removal
+      container:
+        image: "{{ .Values.app.imageName }}:{{ .Values.app.imageTag }}"
+        imagePullPolicy: Always
+        command: ["python"]
+        args: 
+        - "helmrelease_removal.py"
+        - {{ .Values.gcp.pubSubProjectId }}
+        - "{{`{{workflow.parameters.operation_id}}`}}"
+        - {{ .Values.gcp.pub.statusOperationTopic }}
+        - "{{`{{workflow.parameters.app_id}}`}}"

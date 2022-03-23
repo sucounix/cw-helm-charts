@@ -1,0 +1,28 @@
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ template "litespeed.fullname" . }}
+  labels:
+    userID: {{ .Values.userID | quote }}
+    appID: {{ .Values.appID | quote }}
+    version: {{ .Chart.Version | quote }}
+spec:
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  minReplicas: {{ .Values.replicasCount }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ template "litespeed.fullname" . }}
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        averageUtilization: {{ .Values.hpa.memUtil }}
+        type: Utilization
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        averageUtilization: {{ .Values.hpa.cpuUtil }}
+        type: Utilization

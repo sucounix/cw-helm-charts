@@ -1,0 +1,23 @@
+{{- if .Values.wordpress.budget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "wordpress.fullname" . }}
+spec:
+  minAvailable: {{ .Values.wordpress.budget.minAvailable }}
+  selector:
+    matchLabels:
+      name: {{ template "wordpress.fullname" . }}
+{{- end -}}
+{{- if .Values.sshd.budget.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "wordpress.fullname" . }}-sshd-pdb
+spec:
+  minAvailable: {{ .Values.sshd.budget.minAvailable }}
+  selector:
+    matchLabels:
+      name: sshd
+{{- end -}}
