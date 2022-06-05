@@ -3,7 +3,7 @@ entries:
   version-checker:
   - apiVersion: v2
     appVersion: v0.2.1
-    created: "2022-06-05T11:18:24.762337543Z"
+    created: "2022-06-05T11:25:44.539840786Z"
     description: A Helm chart for core version-checker within cloudways-fmp
     digest: c76028190309a13f0a5f1d167df3c688609282e9853ac7140cf7d8c2e885bf6e
     name: version-checker
@@ -13,12 +13,12 @@ entries:
     version: 0.1.0
   - apiVersion: v2
     appVersion: v0.2.1
-    created: "2022-06-05T11:18:24.761806637Z"
+    created: "2022-06-05T11:25:44.539159577Z"
     description: A Helm chart for core version-checker within cloudways-fmp
-    digest: cd8d97d248f392020fc6b91f6c051e55157fab1b1dcf195b3f6dcec75f93c18c
+    digest: 57fc34f49de8d3c916b28076c582c5d75521e411e22d5f550d1898cd6f342b4c
     name: version-checker
     type: application
     urls:
     - version-checker-0.0.1.tgz
     version: 0.0.1
-generated: "2022-06-05T11:18:24.761041627Z"
+generated: "2022-06-05T11:25:44.537500757Z"
