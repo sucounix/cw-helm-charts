@@ -77,3 +77,4 @@ alertmanager:
   nucleus_uri: http://localhost:8080/
   nucleus_key: ""
   testalert: false
+  
