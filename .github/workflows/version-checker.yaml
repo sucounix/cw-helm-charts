@@ -103,4 +103,3 @@ jobs:
         git add index.yaml version-checker*.tgz
         git commit -m "[AUTO] New version-checker Chart version"
         git push
-
