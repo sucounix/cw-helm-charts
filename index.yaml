@@ -3,7 +3,7 @@ entries:
   version-checker:
   - apiVersion: v1
     appVersion: v0.2.1
-    created: "2022-06-04T19:36:01.970462708Z"
+    created: "2022-06-05T06:46:22.270857676Z"
     description: A Helm chart for version-checker
     digest: 6119c306600985c3eff542e47c64c30956427323cd084c3670baee066bb25b4d
     home: https://github.com/joshvanl/verison-checker
@@ -15,7 +15,7 @@ entries:
     version: 0.2.4
   - apiVersion: v1
     appVersion: v0.2.1
-    created: "2022-06-04T19:36:01.969916705Z"
+    created: "2022-06-05T06:46:22.27035177Z"
     description: A Helm chart for version-checker
     digest: 266582149ab978bf1e889232a69a04a6e04d29cf3147a586912be6da7a20776e
     home: https://github.com/joshvanl/verison-checker
@@ -27,7 +27,7 @@ entries:
     version: 0.2.3
   - apiVersion: v1
     appVersion: v0.2.1
-    created: "2022-06-04T19:36:01.968533798Z"
+    created: "2022-06-05T06:46:22.269821864Z"
     description: A Helm chart for version-checker
     digest: b943bacb7f3e363ea70cc35cb5c2b65ab91bb0a16f53acfeaf577979daa00eaa
     home: https://github.com/joshvanl/verison-checker
@@ -37,4 +37,13 @@ entries:
     urls:
     - version-checker-0.2.2.tgz
     version: 0.2.2
-generated: "2022-06-04T19:36:01.967581592Z"
+  - apiVersion: v2
+    created: "2022-06-05T06:46:22.269379758Z"
+    description: A Helm chart for core version-checker within cloudways-fmp
+    digest: ec973581f42ed5a1bf60512aa7809c0d515e7810e5699885a0d8b6178ae680e2
+    name: version-checker
+    type: application
+    urls:
+    - version-checker-0.0.1.tgz
+    version: 0.0.1
+generated: "2022-06-05T06:46:22.268506948Z"
