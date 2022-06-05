@@ -2,5 +2,4 @@ apiVersion: v2
 name: version-checker
 description: A Helm chart for core version-checker within cloudways-fmp
 type: application
-appVersion: "v0.2.1"
-version: 0.0.1
+version: 0.1.3
