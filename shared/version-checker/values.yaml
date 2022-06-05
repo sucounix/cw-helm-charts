@@ -72,8 +72,8 @@ serviceMonitor:
   enabled: false
   additionalLabels: {}
 
-# alertmanager:
-#   max_alerts: 10
-#   nucleus_uri: http://localhost:8080/
-#   nucleus_key: ""
-#   testalert: false
+alertmanager:
+  max_alerts: 10
+  nucleus_uri: http://localhost:8080/
+  nucleus_key: ""
+  testalert: false
