@@ -33,14 +33,14 @@ ecr:
   secretAccessKey:
   sessionToken:
 
-# gcr:
-#   token:
+gcr:
+  token:
 
 quay:
   token:
 
 # Can be used to provide custom environment variables e.g. proxy settings
-env: {}
+# env: {}
 
 selfhosted: {}
   #- name: REGISTRY
