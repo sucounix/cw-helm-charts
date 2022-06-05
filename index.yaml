@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  version-checker:
+  - apiVersion: v2
+    appVersion: v0.2.1
+    created: "2022-06-05T12:38:11.307454437Z"
+    description: A Helm chart for core version-checker within cloudways-fmp
+    digest: b146e98881921f1d44cdc4f96c621d7e366f15ec4e291059cba97349e5695ddc
+    name: version-checker
+    type: application
+    urls:
+    - version-checker-0.0.1.tgz
+    version: 0.0.1
+generated: "2022-06-05T12:38:11.306550308Z"
