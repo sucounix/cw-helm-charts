@@ -54,33 +54,33 @@ jobs:
       run: |
         echo "::set-output name=VERSION::$(echo $VERSION)"
 
-    - name: Generate changelog
-      if: github.event_name == 'push'
-      id: Changelog
-      uses: metcalfc/changelog-generator@v1.0.0
-      with:
-        myToken: ${{ secrets.GIT_ACTION_PAT }}
-
-    # - name: Create Release
+    # - name: Generate changelog
     #   if: github.event_name == 'push'
-    #   id: create_release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GIT_ACTION_PAT }}
+    #   id: Changelog
+    #   uses: metcalfc/changelog-generator@v1.0.0
     #   with:
-    #     tag_name: "version-checker-${{ env.VERSION }}"
-    #     release_name: "version-checker-${{ env.VERSION }}"
-    #     body: ${{ steps.Changelog.outputs.changelog }}
-    #     draft: false
-    #     prerelease: false
+    #     myToken: ${{ secrets.GIT_ACTION_PAT }}
 
-    - name: Update chart version in remote repo
+    - name: Create Release
       if: github.event_name == 'push'
-      run: |
-        git pull origin dev
-        git add shared/version-checker/Chart.yaml
-        git commit -m "[AUTO] update chart version"
-        git push --force
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GIT_ACTION_PAT }}
+      with:
+        tag_name: "version-checker-${{ env.VERSION }}"
+        release_name: "version-checker-${{ env.VERSION }}"
+        body: ${{ steps.Changelog.outputs.changelog }}
+        draft: false
+        prerelease: false
+
+    # - name: Update chart version in remote repo
+    #   if: github.event_name == 'push'
+    #   run: |
+    #     git pull origin dev
+    #     git add shared/version-checker/Chart.yaml
+    #     git commit -m "[AUTO] update chart version"
+    #     git push --force
 
     - name: Copy chart to gh-pages branch
       if: github.event_name == 'push'
