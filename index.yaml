@@ -3,7 +3,16 @@ entries:
   version-checker:
   - apiVersion: v1
     appVersion: v0.2.1
-    created: "2022-06-05T20:02:59.458438029Z"
+    created: "2022-06-05T20:17:49.202243506Z"
+    description: A Helm chart for version-checker
+    digest: 4615074a7d50bb0c30a301f150e2d02be9a795f2025a95be309f72caef280fa7
+    name: version-checker
+    urls:
+    - version-checker-0.2.6.tgz
+    version: 0.2.6
+  - apiVersion: v1
+    appVersion: v0.2.1
+    created: "2022-06-05T20:17:49.201696998Z"
     description: A Helm chart for version-checker
     digest: d4aec483989a53de39507189dee702d74de12f420b0907e5dbe4c3f9fe963234
     home: https://github.com/joshvanl/verison-checker
@@ -15,7 +24,7 @@ entries:
     version: 0.2.5
   - apiVersion: v1
     appVersion: v0.2.1
-    created: "2022-06-05T20:02:59.450639985Z"
+    created: "2022-06-05T20:17:49.201288292Z"
     description: A Helm chart for version-checker
     digest: 4db8459cdeaf9ff0a495992f48f13ae19a5add684635aa85b285ac22056a25bb
     home: https://github.com/joshvanl/verison-checker
@@ -27,7 +36,7 @@ entries:
     version: 0.2.4
   - apiVersion: v1
     appVersion: v0.2.1
-    created: "2022-06-05T20:02:59.449297195Z"
+    created: "2022-06-05T20:17:49.200844086Z"
     description: A Helm chart for version-checker
     digest: dac3f335f3d90d67e0dda953866f258960066e3d56c6ae1ca4219b505a9942b1
     home: https://github.com/joshvanl/verison-checker
@@ -39,7 +48,7 @@ entries:
     version: 0.2.3
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2022-06-05T20:02:59.448687Z"
+    created: "2022-06-05T20:17:49.200370679Z"
     description: A Helm chart for Kubernetes
     digest: f6bc7219bec5b224fddec1b137674b8dd5b56c0364311deab196f21735720cfe
     name: version-checker
@@ -47,4 +56,4 @@ entries:
     urls:
     - version-checker-0.0.1.tgz
     version: 0.0.1
-generated: "2022-06-05T20:02:59.447636407Z"
+generated: "2022-06-05T20:17:49.199490167Z"
