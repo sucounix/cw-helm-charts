@@ -74,13 +74,13 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Update chart version in remote repo
-      if: github.event_name == 'push'
-      run: |
-        git pull origin dev
-        git add shared/version-checker/Chart.yaml
-        git commit -m "[AUTO] update chart version"
-        git push --force
+    # - name: Update chart version in remote repo
+    #   if: github.event_name == 'push'
+    #   run: |
+    #     git pull origin dev
+    #     git add shared/version-checker/Chart.yaml
+    #     git commit -m "[AUTO] update chart version"
+    #     git push --force
 
     - name: Copy chart to gh-pages branch
       if: github.event_name == 'push'
