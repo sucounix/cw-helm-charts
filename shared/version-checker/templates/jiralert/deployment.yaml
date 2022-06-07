@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "jiralert.fullname" .}}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app.kubernetes.io/name: {{ include "jiralert.name" .}}
+    app.kubernetes.io/instance: {{ .Release.Name}}
+    app.kubernetes.io/managed-by: {{ .Release.Service}}
+    helm.sh/chart: {{ include "jiralert.chart" .}}
+    component: jiralert
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.deployment.replicas}}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name}}
+      app.kubernetes.io/name: {{ include "jiralert.name" .}}
+  template:
+    metadata:
+      labels:
+        name: jiralert
+        app.kubernetes.io/name: {{ include "jiralert.name" .}}
+        app.kubernetes.io/instance: {{ .Release.Name}}
+        app.kubernetes.io/managed-by: {{ .Release.Service}}
+        helm.sh/chart: {{ include "jiralert.chart" .}}
+    spec:
+      {{- if .Values.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.image.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      restartPolicy: Always
+      containers:
+        - name: jiralert
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy}}
+          args: {{toYaml .Values.deployment.args | nindent 10}}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: 9097
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 9097
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 9091
+              name: metrics
+          volumeMounts:
+            - mountPath: /jiralert-config
+              name: {{ .Values.deployment.volumeName}}
+              readOnly: true
+      volumes:
+        - name: {{ .Values.deployment.volumeName}}
+          secret:
+            secretName: {{ .Values.secretName}}

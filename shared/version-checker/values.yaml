@@ -78,3 +78,76 @@ alertmanager:
   nucleus_uri: http://localhost:8080/
   nucleus_key: ""
   testalert: false
+
+
+
+image:
+  repository: martinlillemetscb/jiralert-linux-amd64
+  tag: 1.1.3
+  pullPolicy: IfNotPresent
+  # One or more secrets to be used when pulling images
+  imagePullSecrets: []
+
+deployment:
+  replicas: 2
+  args:
+    - "--config=/jiralert-config/jiralert.yml"
+    - "--log.level=debug"
+    - "--listen-address=:9097"
+    - "--hash-jira-label"
+  volumeName: jiralert-config
+service:
+  type: ClusterIP
+  nodeport: 30097
+secretName: jiralert-config
+
+resources:
+  limits:
+    cpu: 250m
+    memory: 250Mi
+  requests:
+    cpu: 250m
+    memory: 250Mi
+
+# This contains configuration that is used to create jiralert config file
+config:
+  # Global defaults, applied to all receivers where not explicitly overridden.
+  template: jiralert.tmpl
+
+  # Global access values
+  api_url: https://myjira.atlassian.net
+  user: username@example.com
+  password: 'password'
+
+  # The type of JIRA issue to create. Required.
+  issue_type: "Bug"
+  # Issue priority. Optional.
+  priority: "Highest"
+  # Go template invocation for generating the summary. Required.
+  summary: '{{ template "jira.summary" . }}'
+  # Go template invocation for generating the description. Optional.
+  description: '{{ template "jira.description" . }}'
+  # State to transition into when reopening a closed issue. Required.
+  reopen_state: "Reopened"
+  # Do not reopen issues with this resolution. Optional.
+  wont_fix_resolution: "Won't Fix"
+  # Amount of time after being closed that an issue should be reopened, after which, a new issue is created.
+  # Optional (default: always reopen)
+  reopen_duration: 0h
+
+  # Optional global jql to find the parent ticket to assign tickets to
+  # This can be used if there is automation and parent tickets change (eq: every week new parent)
+  # This jql is fed into jira search api, for more info:
+  # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-post
+  parent_jql: ""
+  # Optional, used in conjunction with parent_jql, if parent_jql finds issue, then created issue type is taken from this
+  # If this is not given or parent_jql returns empty, created issue type defaults to issue_type value
+  parent_subtask_type: Sub-task
+
+  # Receiver definitions. At least one must be defined.
+  # Receiver names must match the Alertmanager receiver names. Required.
+  receivers:
+    - name: jira-al
+      project: AL
+      parent_jql: 'project = \"AL\" AND type = \"Duty Report\" ORDER BY created DESC'
+      parent_subtask_type: "Alert"

@@ -1,0 +1,21 @@
+{{ define "jira.summary" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ range .Alerts }}{{ .Annotations.summary }}{{ end }} {{ end }}
+
+{{ define "jira.description" }}{{ range .Alerts.Firing }}Labels:
+{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}
+
+Annotations:
+{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}
+
+Source: {{ .GeneratorURL }}
+{{ end }}
+
+CommonLabels:
+{{ range .CommonLabels.SortedPairs }} - {{ .Name }} = {{ .Value}}
+{{ end }}
+
+GroupLabels:
+{{ range .GroupLabels.SortedPairs }} - {{ .Name }} = {{ .Value}}
+{{ end }}
+{{ end }}

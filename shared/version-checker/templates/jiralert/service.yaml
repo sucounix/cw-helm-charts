@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jiralert.fullname" .}}
+  labels:
+    app.kubernetes.io/name: {{ include "jiralert.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "jiralert.chart" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    name: jiralert
+    app.kubernetes.io/name: {{ include "jiralert.name" .}}
+    app.kubernetes.io/instance: {{ .Release.Name}}
+  ports:
+    - port: 9097
+      targetPort: 9097
+      {{ if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.nodeport }}
+      {{ end }}
