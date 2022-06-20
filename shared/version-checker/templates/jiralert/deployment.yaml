@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "jiralert.fullname" .}}
+  name: jiralert
   {{- with .Values.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -39,8 +39,8 @@ spec:
       restartPolicy: Always
       containers:
         - name: jiralert
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy}}
+          image: "{{ .Values.jiralert_image.repository }}:{{ .Values.jiralert_image.tag }}"
+          imagePullPolicy: {{ .Values.jiralert_image.pullPolicy}}
           args: {{toYaml .Values.deployment.args | nindent 10}}
           {{- with .Values.resources }}
           resources:
