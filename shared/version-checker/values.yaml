@@ -152,3 +152,4 @@ config:
       project: AL
       parent_jql: 'project = \"AL\" AND type = \"Duty Report\" ORDER BY created DESC'
       parent_subtask_type: "Alert"
+
