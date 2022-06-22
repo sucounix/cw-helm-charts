@@ -54,12 +54,12 @@ jobs:
       run: |
         echo "::set-output name=VERSION::$(echo $VERSION)"
 
-    - name: Generate changelog
-      if: github.event_name == 'push'
-      id: Changelog
-      uses: metcalfc/changelog-generator@v1.0.0
-      with:
-        myToken: ${{ secrets.GIT_ACTION_PAT }}
+    # - name: Generate changelog
+    #   if: github.event_name == 'push'
+    #   id: Changelog
+    #   uses: metcalfc/changelog-generator@v1.0.0
+    #   with:
+    #     myToken: ${{ secrets.GIT_ACTION_PAT }}
 
     # - name: Create Release
     #   if: github.event_name == 'push'
