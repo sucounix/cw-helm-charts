@@ -90,7 +90,7 @@ jiralert_image:
   imagePullSecrets: []
 
 deployment:
-  replicas: 2
+  replicas: 1
   args:
     - "--config=/jiralert-config/jiralert.yml"
     - "--log.level=debug"
@@ -116,9 +116,9 @@ config:
   template: jiralert.tmpl
 
   # Global access values
-  api_url: https://myjira.atlassian.net
-  user: username@example.com
-  password: 'password'
+  api_url: https://suco.atlassian.net
+  user: sucocloud@gmail.com
+  password: 'idkHRDC5wuHgVZw'
 
   # The type of JIRA issue to create. Required.
   issue_type: "Bug"
@@ -148,8 +148,8 @@ config:
   # Receiver definitions. At least one must be defined.
   # Receiver names must match the Alertmanager receiver names. Required.
   receivers:
-    - name: jira-al
-      project: AL
+    - name: version-checker
+      project: VC
       parent_jql: 'project = \"AL\" AND type = \"Duty Report\" ORDER BY created DESC'
       parent_subtask_type: "Alert"
 
