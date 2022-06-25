@@ -65,7 +65,7 @@ resources: {}
 
 # Prometheus Operator
 prometheus:
-  enabled: false
+  enabled: true
   replicas: 1
   serviceAccountName: prometheus
 
@@ -102,13 +102,13 @@ jiralert_service:
   nodeport: 30097
 secretName: jiralert-config
 
-resources:
-  limits:
-    cpu: 250m
-    memory: 250Mi
-  requests:
-    cpu: 250m
-    memory: 250Mi
+# resources:
+#   limits:
+#     cpu: 250m
+#     memory: 250Mi
+#   requests:
+#     cpu: 250m
+#     memory: 250Mi
 
 # This contains configuration that is used to create jiralert config file
 config:
