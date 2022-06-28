@@ -12,7 +12,7 @@ data:
       route:
         group_wait: 10s
         group_interval: 5m
-        receiver: nucleus
+        receiver: version-checker
         repeat_interval: 1h
         group_by:
         - namespace
@@ -28,14 +28,8 @@ data:
           severity: warning|info
 
       receivers:
-        - name: nucleus
+        - name: version-checker
           webhook_configs:
           - send_resolved: true
-            url: {{.Values.alertmanager.nucleus_uri | quote}}
+            url: {{.Values.alertmanager.version_checker_uri | quote}}
             max_alerts: {{.Values.alertmanager.max_alerts}}
-            {{- if .Values.alertmanager.nucleus_key }}
-            http_config:
-              authorization:
-                type: Bearer
-                credentials: {{.Values.alertmanager.nucleus_key | quote}}
-            {{- end -}}

@@ -65,7 +65,7 @@ resources: {}
 
 # Prometheus Operator
 prometheus:
-  enabled: true
+  enabled: false
   replicas: 1
   serviceAccountName: prometheus
 
@@ -76,9 +76,7 @@ serviceMonitor:
 
 alertmanager:
   max_alerts: 10
-  nucleus_uri: http://localhost:8080/
-  nucleus_key: ""
-  testalert: false
+  version_checker_uri: http://localhost:8080/
 
 
 ######################################################

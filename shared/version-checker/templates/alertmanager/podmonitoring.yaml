@@ -1,0 +1,18 @@
+
+apiVersion: monitoring.googleapis.com/v1alpha1
+kind: PodMonitoring
+metadata:
+  name: alertmanager
+  namespace: {{.Release.Namespace}}
+spec:
+  endpoints:
+  - interval: "30s"
+    port: http
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: alertmanager
+      app.kubernetes.io/name: alertmanager
+  targetLabels:
+    metadata:
+    - pod
+

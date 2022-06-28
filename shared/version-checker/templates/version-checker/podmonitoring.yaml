@@ -1,0 +1,18 @@
+---
+apiVersion: monitoring.googleapis.com/v1alpha1
+kind: PodMonitoring
+metadata:
+  name: version-checker
+  namespace: {{.Release.Namespace}}
+spec:
+  endpoints:
+  - interval: 1h
+    port: http
+  selector:
+    matchLabels:
+      app: version-checker
+      app.kubernetes.io/name: version-checker
+      app.kubernetes.io/instance: version-checker
+  targetLabels:
+    metadata:
+    - pod

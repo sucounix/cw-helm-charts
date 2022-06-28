@@ -18,6 +18,7 @@ spec:
     metadata:
       labels:
         app: {{ $chartname }}
+{{ include "version-checker.labels" . | indent 8 }}
       annotations:
         prometheus.io/path: "/metrics"
         prometheus.io/scrape: "true"
