@@ -6,13 +6,11 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   endpoints:
-  - interval: 1h
-    port: http
+  - interval: 30s
+    port: 8080
   selector:
     matchLabels:
       app: version-checker
-      app.kubernetes.io/name: version-checker
-      app.kubernetes.io/instance: version-checker
   targetLabels:
     metadata:
     - pod

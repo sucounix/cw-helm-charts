@@ -5,6 +5,10 @@ metadata:
   labels:
     app: {{ include "version-checker.name" . }}
 {{ include "version-checker.labels" . | indent 4 }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8080"
 spec:
   ports:
     - port: {{ .Values.service.port }}

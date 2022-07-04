@@ -1,0 +1,3 @@
+curl -H "Content-type: application/json" -X POST \
+  -d '{"receiver": "version-checker", "status": "firing", "alerts": [{"status": "firing", "labels": {"alertname": "TestAlert", "key": "value"} }], "groupLabels": {"alertname": "TestAlert"}}' \
+  http://localhost:9097/alert
